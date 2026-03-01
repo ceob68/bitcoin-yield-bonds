@@ -1,9 +1,9 @@
 import { Blockchain } from '@btc-vision/btc-runtime/runtime';
 import { revertOnError } from '@btc-vision/btc-runtime/runtime/abort/abort';
-import { BitcoinTontine } from './contracts/BitcoinTontine';
+import { BitcoinYieldBonds } from './contracts/BitcoinYieldBonds';
 
-Blockchain.contract = (): BitcoinTontine => {
-    return new BitcoinTontine();
+Blockchain.contract = (): BitcoinYieldBonds => {
+    return new BitcoinYieldBonds();
 };
 
 export * from '@btc-vision/btc-runtime/runtime/exports';

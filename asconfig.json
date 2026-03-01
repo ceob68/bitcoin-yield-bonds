@@ -29,6 +29,9 @@
             "outFile": "build/Resolver.wasm",
             "use": ["abort=src/btc-resolver/index/abort"]
         },
+        "bonds": {
+            "outFile": "build/BitcoinYieldBonds.wasm"
+        },
         "tontine": {
             "outFile": "build/BitcoinTontine.wasm"
         }
