@@ -1,24 +1,23 @@
-# 💀 Bitcoin Tontine
+# Bitcoin Yield Bonds
 
-**The First Adversarial Game Theory Protocol on Bitcoin L1 — Powered by OP_NET**
+**Decentralized Fixed Income Protocol on Bitcoin L1 — Powered by OP_NET**
 
-> "PING OR DIE. The last survivor claims everything."
+> "Earn predictable yields on Bitcoin. DeFi fixed income, for the first time on L1."
 
-## What is Bitcoin Tontine?
+## What is Bitcoin Yield Bonds?
 
-50 players enter a pool with 10 tokens each. Every player must ping regularly to stay alive. Miss your ping and you are liquidated — your funds distributed to survivors proportionally by seniority. Last survivor wins everything.
+The first overcollateralized bond marketplace on Bitcoin L1. Issuers lock 150% collateral to raise capital. Investors earn fixed yields. All transparent, all on-chain.
 
-## Game Mechanics
+## Features
 
-- 50 players per pool (historical count)
-- Ping interval: 7 days → accelerates to 1 hour minimum
-- 3 hunting bullets per pool (available after 70% of game)
-- Counter-hunt: if target pings during hunt window, hunter loses bullet + 5% penalty
-- Points system: veterans earn more from liquidations
-- 0.3% protocol fee on every liquidation
+- Create bonds with custom APY and duration
+- Buy bond positions and earn yield block by block
+- Claim yield anytime — no lockups
+- 150% overcollateralization protects investors
+- 0.5% protocol fee on yield claimed
 
-## Built for Vibecoding Week 2 — The DeFi Signal
+## Built for Vibecoding Week 3 — The Advance
 
-**Live**: bitcoin-tontine.vercel.app
-**Contract**: OP_NET Testnet
-**Network**: Bitcoin L1
+**Live**: bitcoin-yield-bonds.vercel.app
+**Contract**: opt1sqrju7hddyf79e52nagx894yu93qfz4v30g4lde3y
+**Network**: Bitcoin L1 Testnet via OP_NET
