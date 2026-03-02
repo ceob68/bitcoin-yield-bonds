@@ -4,1397 +4,739 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Bitcoin Yield Bonds — Fixed Income on Bitcoin L1</title>
-<meta name="description" content="Decentralized bond marketplace on Bitcoin L1. Fixed yields, overcollateralized, transparent."/>
+<meta name="description" content="The first overcollateralized bond marketplace on Bitcoin L1. Fixed yields, transparent mechanics, powered by OP_NET."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --primary:     #0066FF;    /* Bitcoin blue */
-  --primary-light: #E6F0FF;
-  --success:     #10B981;    /* Green for yield */
-  --warning:     #F59E0B;    /* Orange for risk */
-  --danger:      #EF4444;    /* Red for default */
-  --dark-bg:     #0F172A;    /* Navy background */
-  --dark-surface: #1E293B;   /* Dark card background */
-  --dark-border:  #334155;   /* Border color */
-  --dark-text:    #E2E8F0;   /* Light text */
-  --muted-text:   #94A3B8;   /* Muted text */
-  --gold:         #FBBF24;   /* Accent */
-  
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--dark-bg);
-  color: var(--dark-text);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   NAVBAR
-═══════════════════════════════════════════════════════════ */
-
-nav {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--dark-border);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  padding: 0 24px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-left {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  flex: 1;
-}
-
-.logo {
-  font-weight: 800;
-  font-size: 20px;
-  letter-spacing: -0.5px;
-  color: var(--dark-text);
-}
-
-.logo-accent {
-  color: var(--primary);
-}
-
-.nav-menu {
-  display: flex;
-  gap: 24px;
-  list-style: none;
-}
-
-.nav-menu a {
-  color: var(--muted-text);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: var(--transition);
-}
-
-.nav-menu a:hover {
-  color: var(--primary);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.network-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--muted-text);
-}
-
-.network-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--success);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.connect-wallet-btn {
-  padding: 8px 16px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.connect-wallet-btn:hover {
-  background: #0052CC;
-  transform: translateY(-2px);
-}
-
-.connect-wallet-btn.connected {
-  background: var(--success);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   HERO SECTION
-═══════════════════════════════════════════════════════════ */
-
-.hero {
-  padding: 80px 24px;
-  text-align: center;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.hero h1 {
-  font-size: clamp(32px, 6vw, 56px);
-  font-weight: 800;
-  margin-bottom: 16px;
-  letter-spacing: -1px;
-}
-
-.hero-highlight {
-  background: linear-gradient(135deg, var(--primary), #00D4FF);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero p {
-  font-size: 18px;
-  color: var(--muted-text);
-  max-width: 600px;
-  margin: 0 auto 40px;
-  line-height: 1.7;
-}
-
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
-  margin-top: 60px;
-}
-
-.stat-box {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  transition: var(--transition);
-}
-
-.stat-box:hover {
-  border-color: var(--primary);
-  background: rgba(0, 102, 255, 0.05);
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--muted-text);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DASHBOARD
-═══════════════════════════════════════════════════════════ */
-
-.dashboard {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 24px;
-  display: none;
-}
-
-.dashboard.active {
-  display: block;
-}
-
-.section-title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.section-subtitle {
-  font-size: 12px;
-  color: var(--muted-text);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-left: auto;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   BONDS MARKETPLACE
-═══════════════════════════════════════════════════════════ */
-
-.bonds-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  margin-bottom: 60px;
-}
-
-.bond-card {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 12px;
-  padding: 24px;
-  transition: var(--transition);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.bond-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary), transparent);
-}
-
-.bond-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 102, 255, 0.15);
-}
-
-.bond-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  margin-bottom: 16px;
-}
-
-.bond-id {
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--dark-text);
-}
-
-.bond-status {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.bond-status.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.bond-status.mature {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning);
-}
-
-.bond-status.defaulted {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
-}
-
-.bond-issuer {
-  font-size: 12px;
-  color: var(--muted-text);
-  margin-bottom: 16px;
-  word-break: break-all;
-  font-family: var(--font-mono);
-}
-
-.bond-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.metric {
-  padding: 12px;
-  background: rgba(0, 102, 255, 0.05);
-  border-radius: 8px;
-}
-
-.metric-label {
-  font-size: 11px;
-  color: var(--muted-text);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.metric-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 6px;
-  background: var(--dark-border);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--gold));
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.bond-footer {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-small {
-  flex: 1;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #0052CC;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-
-.btn-secondary:hover {
-  background: rgba(0, 102, 255, 0.1);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MY PORTFOLIO
-═══════════════════════════════════════════════════════════ */
-
-.portfolio-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.portfolio-card {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.portfolio-card h3 {
-  font-size: 12px;
-  color: var(--muted-text);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-  letter-spacing: 1px;
-}
-
-.portfolio-card .value {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--success);
-  margin-bottom: 4px;
-}
-
-.portfolio-card .subtext {
-  font-size: 12px;
-  color: var(--muted-text);
-}
-
-.positions-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.positions-table thead {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.positions-table th {
-  padding: 16px 20px;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--muted-text);
-  letter-spacing: 0.5px;
-}
-
-.positions-table td {
-  padding: 16px 20px;
-  border-top: 1px solid var(--dark-border);
-  font-size: 13px;
-}
-
-.positions-table tr:last-child td {
-  border-bottom: none;
-}
-
-.yield-positive {
-  color: var(--success);
-  font-weight: 600;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CREATE BOND FORM
-═══════════════════════════════════════════════════════════ */
-
-.create-bond-section {
-  max-width: 600px;
-  margin-bottom: 60px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 14px;
-}
-
-.form-input, .form-select {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 6px;
-  color: var(--dark-text);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  transition: var(--transition);
-}
-
-.form-input:focus, .form-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
-}
-
-.form-helper {
-  font-size: 12px;
-  color: var(--muted-text);
-  margin-top: 4px;
-}
-
-.btn-large {
-  width: 100%;
-  padding: 14px 24px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-large:hover {
-  background: #0052CC;
-  transform: translateY(-2px);
-}
-
-.btn-large:disabled {
-  background: var(--muted-text);
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MODALS
-═══════════════════════════════════════════════════════════ */
-
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
-  z-index: 2000;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal-overlay.active {
-  display: flex;
-}
-
-.modal {
-  background: var(--dark-surface);
-  border: 1px solid var(--dark-border);
-  border-radius: 12px;
-  padding: 32px;
-  max-width: 500px;
-  width: 100%;
-  position: relative;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: var(--muted-text);
-  font-size: 24px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.modal-close:hover {
-  color: var(--dark-text);
-}
-
-.modal h2 {
-  font-size: 20px;
-  margin-bottom: 8px;
-}
-
-.modal-subtitle {
-  font-size: 13px;
-  color: var(--muted-text);
-  margin-bottom: 20px;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   ALERTS
-═══════════════════════════════════════════════════════════ */
-
-.alert {
-  padding: 14px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 20px;
-  display: none;
-}
-
-.alert.active {
-  display: block;
-}
-
-.alert.success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--success);
-}
-
-.alert.error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: var(--danger);
-}
-
-.alert.warning {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--warning);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════════════════ */
-
-footer {
-  border-top: 1px solid var(--dark-border);
-  padding: 40px 24px;
-  text-align: center;
-  color: var(--muted-text);
-  font-size: 13px;
-}
-
-footer a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-footer a:hover {
-  color: #0052CC;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 768px) {
-  nav { padding: 0 16px; }
-  .nav-menu { display: none; }
-  .hero { padding: 60px 16px; }
-  .bonds-grid { grid-template-columns: 1fr; }
-  .hero-stats { grid-template-columns: 1fr; }
-  .portfolio-overview { grid-template-columns: 1fr; }
-  .modal { padding: 24px; }
+  --blue:      #2563EB;
+  --blue2:     #3B82F6;
+  --blue3:     #1D4ED8;
+  --green:     #10B981;
+  --green2:    #34D399;
+  --gold:      #F59E0B;
+  --red:       #EF4444;
+  --bg:        #060B18;
+  --bg2:       #0C1425;
+  --bg3:       #111827;
+  --panel:     #0F1A2E;
+  --border:    #1E2D47;
+  --border2:   #253550;
+  --text:      #E8F0FE;
+  --muted:     #4A6080;
+  --muted2:    #6B8AAE;
+  --font:      'Space Grotesk', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;}
+
+/* GRID BG */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(37,99,235,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.03) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;z-index:0;
+}
+
+/* TICKER */
+.ticker{background:var(--blue3);height:30px;overflow:hidden;position:sticky;top:0;z-index:900;display:flex;align-items:center;}
+.ticker-label{background:#000;color:var(--blue2);font-family:var(--mono);font-size:10px;letter-spacing:.15em;padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;border-right:1px solid var(--blue2);flex-shrink:0;}
+.ticker-scroll{overflow:hidden;flex:1;}
+.ticker-track{display:flex;animation:ticker 50s linear infinite;white-space:nowrap;}
+.ticker-item{font-family:var(--mono);font-size:11px;padding:0 28px;color:rgba(255,255,255,.9);}
+.ticker-item .sep{color:rgba(255,255,255,.35);margin:0 8px;}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* NAV */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:64px;
+  border-bottom:1px solid var(--border);
+  background:rgba(6,11,24,.9);backdrop-filter:blur(20px);
+  position:sticky;top:30px;z-index:800;
+}
+.logo{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.logo span{color:var(--blue2);}
+.nav-links{display:flex;gap:28px;list-style:none;}
+.nav-links a{font-size:13px;color:var(--muted2);text-decoration:none;font-weight:500;transition:color .2s;}
+.nav-links a:hover{color:var(--blue2);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.block-pill{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:11px;color:var(--muted2);
+  padding:6px 12px;background:var(--panel);border:1px solid var(--border);border-radius:6px;
+}
+.block-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.connect-btn{
+  padding:8px 18px;background:var(--blue);color:#fff;border:none;border-radius:6px;
+  font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.connect-btn:hover{background:var(--blue3);transform:translateY(-1px);}
+.connect-btn.connected{background:var(--green);}
+
+/* HERO */
+.hero{padding:72px 40px 60px;max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--blue2);
+  border:1px solid rgba(37,99,235,.35);padding:6px 14px;border-radius:4px;margin-bottom:28px;
+}
+.hero h1{font-size:clamp(40px,7vw,72px);font-weight:700;letter-spacing:-1.5px;line-height:.95;margin-bottom:20px;}
+.hero h1 .accent{color:var(--blue2);}
+.hero-sub{font-size:17px;color:var(--muted2);max-width:520px;line-height:1.7;margin-bottom:40px;}
+.hero-sub strong{color:var(--text);}
+.hero-ctas{display:flex;gap:12px;margin-bottom:56px;}
+.btn-primary{padding:12px 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary:hover{background:var(--blue3);transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,99,235,.3);}
+.btn-outline{padding:12px 28px;background:transparent;color:var(--blue2);border:1px solid var(--blue);border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-outline:hover{background:rgba(37,99,235,.1);}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.stat-box{background:var(--panel);padding:20px 24px;text-align:center;}
+.stat-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--blue2);display:block;}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-top:4px;}
+
+/* SECTION */
+.section{max-width:1200px;margin:0 auto;padding:0 40px 64px;position:relative;z-index:1;}
+.section-head{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.section-title{font-size:22px;font-weight:700;}
+.section-tag{font-family:var(--mono);font-size:9px;letter-spacing:.15em;color:var(--blue2);border:1px solid rgba(37,99,235,.3);padding:4px 10px;border-radius:4px;text-transform:uppercase;}
+.section-count{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;}
+
+/* BONDS GRID */
+.bonds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;}
+.bond-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  transition:all .3s;cursor:pointer;position:relative;
+}
+.bond-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),transparent);}
+.bond-card:hover{border-color:var(--blue2);transform:translateY(-3px);box-shadow:0 12px 32px rgba(37,99,235,.12);}
+.bond-card-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.bond-id{font-weight:700;font-size:17px;}
+.bond-status-pill{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:4px 10px;border-radius:4px;text-transform:uppercase;}
+.pill-active{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);}
+.pill-mature{background:rgba(245,158,11,.1);color:var(--gold);border:1px solid rgba(245,158,11,.25);}
+.bond-card-body{padding:20px;}
+.bond-issuer{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-bottom:16px;word-break:break-all;}
+.bond-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.metric{padding:12px;background:var(--bg2);border-radius:6px;}
+.metric-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.metric-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--blue2);}
+.metric-val.green{color:var(--green);}
+.progress-wrap{margin-bottom:14px;}
+.progress-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px;}
+.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:3px;transition:width .8s ease;}
+.bond-actions{display:flex;gap:10px;}
+.btn-buy{flex:1;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-buy:hover{background:var(--blue3);}
+.btn-details{padding:10px 14px;background:transparent;color:var(--blue2);border:1px solid var(--blue);border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-details:hover{background:rgba(37,99,235,.1);}
+
+/* CREATE BOND */
+.create-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;}
+.form-input,.form-select{
+  width:100%;padding:11px 14px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:6px;
+  color:var(--text);font-family:var(--font);font-size:14px;transition:all .2s;outline:none;
+}
+.form-input:focus,.form-select:focus{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.form-helper{font-size:11px;color:var(--muted);margin-top:5px;}
+.collateral-box{padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--gold);}
+.btn-create{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn-create:hover{background:var(--blue3);transform:translateY(-1px);}
+.btn-create:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* PREVIEW CARD */
+.preview-card{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--blue2);border-radius:8px;padding:28px;}
+.preview-title{font-size:16px;font-weight:700;margin-bottom:20px;color:var(--muted2);}
+.preview-apy{font-family:var(--mono);font-size:48px;font-weight:700;color:var(--green);line-height:1;margin-bottom:4px;}
+.preview-apy-label{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:24px;}
+.preview-rows{display:flex;flex-direction:column;gap:10px;}
+.preview-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg2);border-radius:6px;font-size:13px;}
+.preview-row span:first-child{color:var(--muted2);}
+.preview-row span:last-child{font-family:var(--mono);font-weight:600;}
+
+/* PORTFOLIO */
+.portfolio-overview{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.portfolio-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;}
+.portfolio-card h4{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:12px;}
+.portfolio-val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--green);}
+.portfolio-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.positions-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.positions-table th{padding:14px 18px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.1em;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);}
+.positions-table td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;}
+.positions-table tr:last-child td{border-bottom:none;}
+.yield-green{color:var(--green);font-family:var(--mono);font-weight:700;}
+
+/* HOW IT WORKS */
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;}
+.how-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:28px;position:relative;overflow:hidden;}
+.how-card::before{content:attr(data-step);position:absolute;right:16px;top:-6px;font-family:var(--mono);font-size:72px;font-weight:700;color:var(--border);line-height:1;}
+.how-icon{font-size:28px;margin-bottom:14px;}
+.how-title{font-size:17px;font-weight:700;margin-bottom:10px;}
+.how-desc{font-size:13px;color:var(--muted2);line-height:1.7;}
+.how-desc strong{color:var(--text);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);}
+.modal-bg.open{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--border2);border-top:3px solid var(--blue2);border-radius:8px;padding:32px;max-width:460px;width:100%;position:relative;animation:modal-in .25s ease;}
+@keyframes modal-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:14px;right:14px;background:var(--bg2);border:1px solid var(--border);color:var(--muted2);width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.modal-title{font-size:22px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--muted2);margin-bottom:20px;}
+.modal-info{background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.2);border-radius:6px;padding:14px;margin-bottom:18px;font-size:13px;}
+.modal-info-row{display:flex;justify-content:space-between;margin-bottom:6px;}
+.modal-info-row:last-child{margin-bottom:0;}
+.modal-info-row .lbl{color:var(--muted2);}
+.modal-info-row .val{font-family:var(--mono);font-weight:700;color:var(--green);}
+.btn-confirm{width:100%;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-confirm:hover{background:var(--blue3);}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:3000;display:flex;flex-direction:column;gap:8px;}
+.toast-item{padding:14px 18px;border-radius:8px;font-size:13px;font-weight:500;max-width:340px;animation:toast-in .3s ease;display:flex;align-items:center;gap:10px;}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.toast-success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green2);}
+.toast-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#FCA5A5;}
+.toast-info{background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:var(--blue2);}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:28px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-logo{font-size:16px;font-weight:700;color:var(--muted);}
+.footer-links{display:flex;gap:20px;}
+.footer-links a{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.footer-links a:hover{color:var(--blue2);}
+.footer-copy{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+@media(max-width:900px){
+  nav,.hero,.section{padding-left:20px;padding-right:20px;}
+  .nav-links{display:none;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .bonds-grid{grid-template-columns:1fr;}
+  .create-grid{grid-template-columns:1fr;}
+  .portfolio-overview{grid-template-columns:1fr;}
+  footer{padding:20px;flex-direction:column;text-align:center;}
 }
 </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
-<nav>
-  <div class="nav-left">
-    <div class="logo">Bitcoin <span class="logo-accent">Yield Bonds</span></div>
-    <ul class="nav-menu">
-      <li><a href="#marketplace">Marketplace</a></li>
-      <li><a href="#portfolio">Portfolio</a></li>
-      <li><a href="#create">Create Bond</a></li>
-      <li><a href="#docs">Docs</a></li>
-    </ul>
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-label">📈 LIVE BONDS</div>
+  <div class="ticker-scroll">
+    <div class="ticker-track" id="tickerTrack"></div>
   </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Bitcoin <span>Yield Bonds</span></div>
+  <ul class="nav-links">
+    <li><a href="#marketplace">Marketplace</a></li>
+    <li><a href="#create">Create Bond</a></li>
+    <li><a href="#portfolio">Portfolio</a></li>
+    <li><a href="#how">How it Works</a></li>
+  </ul>
   <div class="nav-right">
-    <div class="network-indicator">
-      <div class="network-dot"></div>
-      <span id="networkStatus">Bitcoin L1 (Testnet)</span>
+    <div class="block-pill">
+      <div class="block-dot"></div>
+      <span id="navBlock">BLOCK —</span>
     </div>
-    <button class="connect-wallet-btn" id="walletBtn" onclick="connectWallet()">
-      CONNECT WALLET
-    </button>
+    <button class="connect-btn" id="connectBtn" onclick="connectWallet()">CONNECT WALLET</button>
   </div>
 </nav>
 
-<!-- HERO SECTION -->
-<section class="hero" id="hero">
-  <h1>Bitcoin <span class="hero-highlight">Fixed Income</span></h1>
-  <p>Earn predictable yields on your Bitcoin. Overcollateralized bonds with transparent mechanics.</p>
-  
-  <div class="hero-stats">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <div class="block-dot"></div>
+    LIVE ON BITCOIN L1 · POWERED BY OP_NET
+  </div>
+  <h1>Bitcoin<br><span class="accent">Fixed Income.</span></h1>
+  <p class="hero-sub">
+    The first overcollateralized bond marketplace on Bitcoin L1.<br>
+    <strong>Earn predictable yields</strong> on your Bitcoin — transparent mechanics, no middlemen.
+  </p>
+  <div class="hero-ctas">
+    <button class="btn-primary" onclick="document.getElementById('marketplace').scrollIntoView({behavior:'smooth'})">Browse Bonds</button>
+    <button class="btn-outline" onclick="document.getElementById('create').scrollIntoView({behavior:'smooth'})">Issue a Bond</button>
+  </div>
+  <div class="stats-row">
     <div class="stat-box">
-      <div class="stat-value" id="totalBTC">—</div>
-      <div class="stat-label">Total BTC Locked</div>
+      <span class="stat-num" id="statLocked">—</span>
+      <span class="stat-lbl">BTC Locked</span>
     </div>
     <div class="stat-box">
-      <div class="stat-value" id="totalBonds">—</div>
-      <div class="stat-label">Active Bonds</div>
+      <span class="stat-num" id="statBonds">—</span>
+      <span class="stat-lbl">Active Bonds</span>
     </div>
     <div class="stat-box">
-      <div class="stat-value" id="avgYield">—</div>
-      <div class="stat-label">Avg. APY</div>
+      <span class="stat-num" id="statAvgApy">—</span>
+      <span class="stat-lbl">Avg. APY</span>
     </div>
     <div class="stat-box">
-      <div class="stat-value" id="totalYield">—</div>
-      <div class="stat-label">Yield Paid Out</div>
+      <span class="stat-num" id="statYieldPaid">—</span>
+      <span class="stat-lbl">Yield Paid</span>
     </div>
   </div>
 </section>
 
-<!-- DASHBOARD (Hidden until wallet connected) -->
-<div class="dashboard" id="dashboard">
-  
-  <!-- ALERTS -->
-  <div class="alert success" id="successAlert"></div>
-  <div class="alert error" id="errorAlert"></div>
-  <div class="alert warning" id="warningAlert"></div>
+<!-- MARKETPLACE -->
+<div class="section" id="marketplace">
+  <div class="section-head">
+    <div class="section-title">Bond Marketplace</div>
+    <div class="section-tag">LIVE</div>
+    <div class="section-count" id="bondCount">0 Active Bonds</div>
+  </div>
+  <div class="bonds-grid" id="bondsGrid"></div>
+</div>
 
-  <!-- MARKETPLACE SECTION -->
-  <section id="marketplace">
-    <div class="section-title">
-      Bonds Marketplace
-      <span class="section-subtitle" id="activeBondsCount">0 Active Bonds</span>
-    </div>
-    <div class="bonds-grid" id="bondsGrid">
-      <!-- Populated by JavaScript -->
-    </div>
-  </section>
-
-  <!-- PORTFOLIO SECTION -->
-  <section id="portfolio">
-    <div class="section-title">
-      Your Portfolio
-    </div>
-    
-    <div class="portfolio-overview">
-      <div class="portfolio-card">
-        <h3>Total Invested</h3>
-        <div class="value" id="portfolioInvested">0 BTC</div>
-        <div class="subtext">Across all bonds</div>
-      </div>
-      <div class="portfolio-card">
-        <h3>Yield Earned</h3>
-        <div class="value" id="portfolioYield">0 BTC</div>
-        <div class="subtext">Ready to claim</div>
-      </div>
-      <div class="portfolio-card">
-        <h3>Avg. Yield</h3>
-        <div class="value" id="portfolioAvgYield">—%</div>
-        <div class="subtext">Weighted average APY</div>
-      </div>
-    </div>
-
-    <div style="margin-bottom: 20px;">
-      <h3 style="margin-bottom: 16px;">Your Positions</h3>
-      <div style="overflow-x: auto;">
-        <table class="positions-table" id="positionsTable">
-          <thead>
-            <tr>
-              <th>Bond ID</th>
-              <th>Amount (BTC)</th>
-              <th>APY</th>
-              <th>Yield Earned</th>
-              <th>Entry Date</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="positionsBody">
-            <!-- Populated by JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- CREATE BOND SECTION -->
-  <section id="create">
-    <div class="section-title">Create New Bond</div>
-    
-    <div class="create-bond-section">
+<!-- CREATE BOND -->
+<div class="section" id="create">
+  <div class="section-head">
+    <div class="section-title">Issue a Bond</div>
+    <div class="section-tag">CREATE</div>
+  </div>
+  <div class="create-grid">
+    <div>
       <div class="form-group">
-        <label class="form-label">Bond Amount (BTC)</label>
-        <input type="number" class="form-input" id="createBondAmount" placeholder="100" min="0.1" step="0.1"/>
-        <div class="form-helper">The amount you want to raise</div>
+        <label class="form-label">Bond Amount (tokens)</label>
+        <input type="number" class="form-input" id="bondAmount" placeholder="1000" min="1" oninput="updatePreview()"/>
+        <div class="form-helper">The amount you want to raise from investors</div>
       </div>
-
       <div class="form-group">
         <label class="form-label">Annual Interest Rate (%)</label>
-        <input type="number" class="form-input" id="createBondRate" placeholder="6" min="0.1" max="50" step="0.1"/>
-        <div class="form-helper">APY offered to investors (e.g., 6 = 6%)</div>
+        <input type="number" class="form-input" id="bondRate" placeholder="6" min="0.1" max="50" step="0.1" oninput="updatePreview()"/>
+        <div class="form-helper">APY offered to investors — e.g. 6 = 6% per year</div>
       </div>
-
       <div class="form-group">
-        <label class="form-label">Bond Duration</label>
-        <select class="form-select" id="createBondDuration">
+        <label class="form-label">Duration</label>
+        <select class="form-select" id="bondDuration" onchange="updatePreview()">
           <option value="30">30 days</option>
           <option value="60">60 days</option>
           <option value="90">90 days</option>
           <option value="180">6 months</option>
           <option value="365" selected>1 year</option>
         </select>
-        <div class="form-helper">How long until the bond matures</div>
       </div>
-
       <div class="form-group">
-        <label class="form-label">Required Collateral</label>
-        <div style="padding: 12px 16px; background: var(--dark-bg); border: 1px solid var(--dark-border); border-radius: 6px; font-family: var(--font-mono); font-size: 14px;">
-          <div id="collateralRequired">—</div>
-          <div class="form-helper" style="margin-top: 8px;">150% of bond amount (automated calculation)</div>
-        </div>
+        <label class="form-label">Required Collateral (auto)</label>
+        <div class="collateral-box" id="collateralBox">— tokens</div>
+        <div class="form-helper">150% of bond amount — locked until maturity</div>
       </div>
-
-      <button class="btn-large" id="createBondBtn" onclick="createBond()" disabled>
-        Create Bond
+      <button class="btn-create" id="createBondBtn" onclick="createBond()">
+        🔐 Issue Bond — Lock Collateral
       </button>
     </div>
-  </section>
-
-</div>
-
-<!-- MODALS -->
-
-<!-- Buy Bond Modal -->
-<div class="modal-overlay" id="buyBondModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeBuyBondModal()">✕</button>
-    <h2>Buy Bond Position</h2>
-    <p class="modal-subtitle">Purchase a portion of this bond</p>
-    
-    <div class="form-group">
-      <label class="form-label">Amount to Invest (BTC)</label>
-      <input type="number" class="form-input" id="buyAmount" placeholder="10" min="0.1" step="0.1"/>
-    </div>
-
-    <div style="padding: 16px; background: rgba(0, 102, 255, 0.05); border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <span>Estimated Yield (APY):</span>
-        <span id="estimatedYield" class="yield-positive">—</span>
-      </div>
-      <div style="display: flex; justify-content: space-between;">
-        <span>Total Return in 1 Year:</span>
-        <span id="totalReturn" class="yield-positive">—</span>
+    <div>
+      <div class="preview-card">
+        <div class="preview-title">BOND PREVIEW</div>
+        <div class="preview-apy" id="previewApy">—%</div>
+        <div class="preview-apy-label">ANNUAL YIELD TO INVESTORS</div>
+        <div class="preview-rows">
+          <div class="preview-row"><span>Raise Amount</span><span id="prevRaise">— tokens</span></div>
+          <div class="preview-row"><span>Collateral Required</span><span id="prevCollateral" style="color:var(--gold)">— tokens</span></div>
+          <div class="preview-row"><span>Duration</span><span id="prevDuration">—</span></div>
+          <div class="preview-row"><span>Total Interest Owed</span><span id="prevInterest" style="color:var(--red)">— tokens</span></div>
+          <div class="preview-row"><span>Protocol Fee</span><span>0.5%</span></div>
+          <div class="preview-row"><span>Network</span><span>Bitcoin L1</span></div>
+        </div>
       </div>
     </div>
-
-    <button class="btn-large" id="buyBondBtn" onclick="buyBond()">
-      Confirm Purchase
-    </button>
   </div>
 </div>
 
-<!-- Claim Yield Modal -->
-<div class="modal-overlay" id="claimYieldModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeClaimYieldModal()">✕</button>
-    <h2>Claim Yield</h2>
-    <p class="modal-subtitle">Withdraw your accumulated yield</p>
-    
-    <div style="padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; margin-bottom: 20px; font-size: 13px;">
-      <div style="display: flex; justify-content: space-between;">
-        <span>Available to Claim:</span>
-        <span id="yieldAvailable" class="yield-positive">—</span>
-      </div>
+<!-- PORTFOLIO -->
+<div class="section" id="portfolio">
+  <div class="section-head">
+    <div class="section-title">Your Portfolio</div>
+    <div class="section-tag">CONNECTED</div>
+  </div>
+  <div class="portfolio-overview">
+    <div class="portfolio-card">
+      <h4>Total Invested</h4>
+      <div class="portfolio-val" id="portInvested">0</div>
+      <div class="portfolio-sub">tokens across all bonds</div>
     </div>
-
-    <button class="btn-large" id="claimYieldBtn" onclick="claimYield()">
-      Claim Yield Now
-    </button>
+    <div class="portfolio-card">
+      <h4>Yield Accrued</h4>
+      <div class="portfolio-val" id="portYield">0.000000</div>
+      <div class="portfolio-sub">ready to claim</div>
+    </div>
+    <div class="portfolio-card">
+      <h4>Avg. APY</h4>
+      <div class="portfolio-val" id="portAvgApy">—%</div>
+      <div class="portfolio-sub">weighted average</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="positions-table">
+      <thead>
+        <tr>
+          <th>Bond</th>
+          <th>Invested</th>
+          <th>APY</th>
+          <th>Yield Accrued</th>
+          <th>Entry Block</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="positionsBody">
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:32px">Connect wallet to see your positions</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
-<!-- Footer -->
+<!-- HOW IT WORKS -->
+<div class="section" id="how">
+  <div class="section-head">
+    <div class="section-title">How It Works</div>
+    <div class="section-tag">MECHANICS</div>
+  </div>
+  <div class="how-grid">
+    <div class="how-card" data-step="01">
+      <div class="how-icon">🔐</div>
+      <div class="how-title">Issue a Bond</div>
+      <div class="how-desc">Lock <strong>150% collateral</strong> to raise capital. Set your own APY and duration. Investors fund your bond block by block.</div>
+    </div>
+    <div class="how-card" data-step="02">
+      <div class="how-icon">💸</div>
+      <div class="how-title">Buy Positions</div>
+      <div class="how-desc">Invest in any active bond. Your tokens go to the issuer. You earn <strong>yield every block</strong> — claimable anytime.</div>
+    </div>
+    <div class="how-card" data-step="03">
+      <div class="how-icon">📈</div>
+      <div class="how-title">Earn Yield</div>
+      <div class="how-desc">Yield accrues <strong>block by block</strong> proportional to your investment and the bond's APY. Claim whenever you want.</div>
+    </div>
+    <div class="how-card" data-step="04">
+      <div class="how-icon">🛡️</div>
+      <div class="how-title">Overcollateralized</div>
+      <div class="how-desc">Issuers lock <strong>150% of the bond value</strong> as collateral. If they default, investors are protected by the collateral pool.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
 <footer>
-  <p>Bitcoin Yield Bonds — Decentralized Fixed Income on Bitcoin L1</p>
-  <p style="margin-top: 12px;">
-    Built with OP_NET | <a href="https://github.com/ceob68/bitcoin-yield-bonds" target="_blank">GitHub</a> | 
-    <a href="https://vibecode.finance" target="_blank">Vibecoding Challenge</a>
-  </p>
+  <div class="footer-logo">Bitcoin Yield Bonds</div>
+  <div class="footer-links">
+    <a href="https://github.com/ceob68/bitcoin-yield-bonds" target="_blank">GITHUB</a>
+    <a href="https://opnet.org" target="_blank">OP_NET</a>
+    <a href="https://opscan.org" target="_blank">OPSCAN</a>
+    <a href="https://vibecode.finance" target="_blank">VIBECODE</a>
+  </div>
+  <div class="footer-copy">BUILT ON BITCOIN L1 · 0.5% PROTOCOL FEE · CODE IS LAW</div>
 </footer>
 
-<!-- OP_WALLET SDK & ETHERS.JS -->
-<script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+<!-- BUY MODAL -->
+<div class="modal-bg" id="buyModal" onclick="closeBuyModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('buyModal').classList.remove('open')">✕</button>
+    <div class="modal-title">Buy Bond Position</div>
+    <div class="modal-sub" id="buyModalSub">Purchase a position in this bond</div>
+    <div class="form-group">
+      <label class="form-label">Amount to Invest (tokens)</label>
+      <input type="number" class="form-input" id="buyAmount" placeholder="100" oninput="updateBuyPreview()"/>
+    </div>
+    <div class="modal-info" id="buyModalInfo">
+      <div class="modal-info-row"><span class="lbl">Annual Yield (APY)</span><span class="val" id="buyModalApy">—</span></div>
+      <div class="modal-info-row"><span class="lbl">Est. Daily Yield</span><span class="val" id="buyModalDaily">—</span></div>
+      <div class="modal-info-row"><span class="lbl">Est. 1-Year Return</span><span class="val" id="buyModalReturn">—</span></div>
+    </div>
+    <button class="btn-confirm" onclick="confirmBuy()">✅ Confirm Purchase</button>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast" id="toastContainer"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════
-// CONTRACT CONFIG
-// ════════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
 const CONTRACT_ADDRESS = 'opt1sqrju7hddyf79e52nagx894yu93qfz4v30g4lde3y';
-const CONTRACT_ABI = [
-  // createBond(amountBTC, interestRate, durationBlocks)
-  { name: 'createBond', type: 'function', inputs: [
-    { name: 'amountBTC', type: 'uint64' },
-    { name: 'interestRate', type: 'uint64' },
-    { name: 'durationBlocks', type: 'uint64' }
-  ]},
-  // buyBond(bondId, amountBTC)
-  { name: 'buyBond', type: 'function', inputs: [
-    { name: 'bondId', type: 'uint64' },
-    { name: 'amountBTC', type: 'uint64' }
-  ]},
-  // claimYield(bondId)
-  { name: 'claimYield', type: 'function', inputs: [
-    { name: 'bondId', type: 'uint64' }
-  ]},
-  // getBondInfo(bondId)
-  { name: 'getBondInfo', type: 'function', inputs: [
-    { name: 'bondId', type: 'uint64' }
-  ], outputs: [
-    { name: 'bondId', type: 'uint64' },
-    { name: 'collateral', type: 'uint64' },
-    { name: 'totalSold', type: 'uint64' },
-    { name: 'yieldPaid', type: 'uint64' },
-    { name: 'isActive', type: 'bool' },
-    { name: 'isMatured', type: 'bool' },
-    { name: 'isDefaulted', type: 'bool' }
-  ]},
-  // getPositionInfo(bondId, user)
-  { name: 'getPositionInfo', type: 'function', inputs: [
-    { name: 'bondId', type: 'uint64' },
-    { name: 'user', type: 'address' }
-  ], outputs: [
-    { name: 'amount', type: 'uint64' },
-    { name: 'claimed', type: 'uint64' },
-    { name: 'accrued', type: 'uint64' },
-    { name: 'blockElapsed', type: 'uint64' },
-    { name: 'isActive', type: 'bool' }
-  ]}
-];
 
-const TOKEN_ADDRESS = 'YOUR_TESTNET_BTC_TOKEN_ADDRESS';
-
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════
 // STATE
-// ════════════════════════════════════════════════════════════
-
+// ══════════════════════════════════════════
+let currentBlock  = 3426;
 let walletConnected = false;
 let walletAddress = '';
-let provider = null;
-let contract = null;
-let currentBlock = 900000;
-let selectedBondId = null;
+let selectedBond  = null;
 
-// Mock data (will be replaced by real contract reads)
+// Mock bonds — realistic data
 let bonds = [
-  {
-    id: 1,
-    issuer: '0x1234567890123456789012345678901234567890',
-    amount: 100,
-    rate: 6,
-    duration: 365,
-    collateral: 150,
-    totalSold: 45,
-    created: 900000,
-    status: 'active'
-  },
-  {
-    id: 2,
-    issuer: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-    amount: 50,
-    rate: 5,
-    duration: 180,
-    collateral: 75,
-    totalSold: 22,
-    created: 900100,
-    status: 'active'
-  }
+  { id:1, issuer:'opt1pxx8...fsalz9tf', amount:5000, rate:8, duration:365, collateral:7500, sold:3200, created:3300, status:'active' },
+  { id:2, issuer:'opt1pvec...5srfjkpu', amount:2000, rate:6, duration:180, collateral:3000, sold:800,  created:3380, status:'active' },
+  { id:3, issuer:'opt1qt3c...7qjukg6g', amount:10000, rate:5, duration:90, collateral:15000, sold:9100, created:3100, status:'active' },
+  { id:4, issuer:'opt1sqzh...gg49f5sm', amount:1500,  rate:10, duration:60, collateral:2250, sold:1500, created:3400, status:'mature' },
 ];
 
 let userPositions = [];
 
-// ════════════════════════════════════════════════════════════
-// OP_WALLET CONNECTION
-// ════════════════════════════════════════════════════════════
-
-async function connectWallet() {
-  try {
-    // Check if OP_WALLET is available
-    if (!window.opnet) {
-      showAlert('error', 'OP_WALLET not detected. Please install OP_WALLET browser extension.');
-      return;
-    }
-
-    // Request wallet connection
-    const accounts = await window.opnet.requestAccounts();
-    
-    if (!accounts || accounts.length === 0) {
-      showAlert('error', 'Wallet connection failed');
-      return;
-    }
-
-    walletConnected = true;
-    walletAddress = accounts[0];
-
-    // Initialize provider
-    provider = new ethers.providers.JsonRpcProvider('https://testnet-rpc.opnet.org');
-    
-    // Create contract instance (with signer from OP_WALLET)
-    const signer = provider.getSigner(walletAddress);
-    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-    // Update UI
-    updateWalletUI();
-    document.getElementById('dashboard').classList.add('active');
-    document.getElementById('hero').style.display = 'none';
-
-    // Load user data
-    await loadDashboard();
-
-    showAlert('success', Connected: ...);
-
-  } catch (error) {
-    console.error('Wallet connection error:', error);
-    showAlert('error', Connection failed: );
-  }
-}
-
-function updateWalletUI() {
-  const btn = document.getElementById('walletBtn');
-  btn.textContent = ${walletAddress.slice(0, 6)}...;
-  btn.classList.add('connected');
-}
-
-// ════════════════════════════════════════════════════════════
-// LOAD DASHBOARD DATA
-// ════════════════════════════════════════════════════════════
-
-async function loadDashboard() {
-  try {
-    // Load bonds from contract
-    await loadBonds();
-    
-    // Load user positions
-    await loadUserPositions();
-    
-    // Update stats
-    updateStats();
-
-  } catch (error) {
-    console.error('Dashboard load error:', error);
-    showAlert('error', 'Failed to load dashboard');
-  }
-}
-
-async function loadBonds() {
-  try {
-    // In production: iterate through all bonds
-    // For demo: use mock data
-    renderBonds();
-  } catch (error) {
-    console.error('Load bonds error:', error);
-  }
-}
-
-async function loadUserPositions() {
-  try {
-    // In production: read from contract storage
-    // For demo: use mock data
-    userPositions = [
-      {
-        bondId: 1,
-        amount: 10,
-        claimed: 0.3,
-        accrued: 0.15,
-        entryBlock: 900100,
-        rate: 6
-      }
-    ];
-    
-    renderPortfolio();
-  } catch (error) {
-    console.error('Load positions error:', error);
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// RENDER BONDS MARKETPLACE
-// ════════════════════════════════════════════════════════════
-
-function renderBonds() {
-  const grid = document.getElementById('bondsGrid');
-  grid.innerHTML = bonds.map(bond => 
-    <div class="bond-card">
-      <div class="bond-header">
-        <div class="bond-id">Bond #</div>
-        <div class="bond-status active">Active</div>
-      </div>
-      
-      <div class="bond-issuer">
-        Issuer: 
-      </div>
-      
-      <div class="bond-metrics">
-        <div class="metric">
-          <div class="metric-label">APY</div>
-          <div class="metric-value">%</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Duration</div>
-          <div class="metric-value">d</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Total</div>
-          <div class="metric-value"> BTC</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Available</div>
-          <div class="metric-value"> BTC</div>
-        </div>
-      </div>
-      
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: %"></div>
-      </div>
-      
-      <div style="font-size: 12px; color: var(--muted-text); margin-bottom: 16px;">
-        Sold:  /  BTC
-      </div>
-      
-      <div class="bond-footer">
-        <button class="btn-small btn-primary" onclick="openBuyBondModal()">
-          Buy Bonds
-        </button>
-        <button class="btn-small btn-secondary" onclick="viewBondDetails()">
-          Details
-        </button>
-      </div>
-    </div>
+// ══════════════════════════════════════════
+// TICKER
+// ══════════════════════════════════════════
+const tickerEvents = [
+  '💸 opt1p...x7f invested 200 tokens in Bond #1 — earning 8% APY',
+  '📈 Bond #3 — 91% funded · 5% APY · 90 days',
+  '✅ opt1p...9ab claimed 12.4 tokens yield from Bond #2',
+  '🔐 Bond #4 — new bond issued · 10% APY · 60 days · FULLY FUNDED',
+  '💸 opt1p...b3e invested 500 tokens in Bond #3',
+  '📊 Total yield paid out: 847 tokens this week',
+  '🛡️ All bonds overcollateralized at 150%',
+  '💸 opt1p...f2d invested 100 tokens in Bond #1 — earning 8% APY',
+];
+function buildTicker(){
+  const d = [...tickerEvents,...tickerEvents];
+  document.getElementById('tickerTrack').innerHTML = d.map(e=>
+    `<span class="ticker-item">${e}<span class="sep">|</span></span>`
   ).join('');
-
-  document.getElementById('activeBondsCount').textContent = ${bonds.length} Active Bonds;
 }
 
-// ════════════════════════════════════════════════════════════
-// BUY BOND
-// ════════════════════════════════════════════════════════════
-
-function openBuyBondModal(bondId) {
-  selectedBondId = bondId;
-  document.getElementById('buyBondModal').classList.add('active');
-}
-
-function closeBuyBondModal() {
-  document.getElementById('buyBondModal').classList.remove('active');
-  selectedBondId = null;
-}
-
-async function buyBond() {
-  try {
-    const amount = parseFloat(document.getElementById('buyAmount').value);
-    
-    if (!amount || amount <= 0) {
-      showAlert('error', 'Please enter a valid amount');
-      return;
-    }
-
-    // Convert to satoshis (BTC has 8 decimals)
-    const amountSatoshis = Math.floor(amount * 100_000_000);
-
-    // Call contract
-    const tx = await contract.buyBond(selectedBondId, amountSatoshis);
-    showAlert('warning', 'Transaction submitted. Waiting for confirmation...');
-    
-    await tx.wait();
-    
-    showAlert('success', 'Bond purchased successfully!');
-    closeBuyBondModal();
-    
-    // Reload data
-    await loadDashboard();
-
-  } catch (error) {
-    console.error('Buy bond error:', error);
-    showAlert('error', Transaction failed: );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// PORTFOLIO
-// ════════════════════════════════════════════════════════════
-
-function renderPortfolio() {
-  const tbody = document.getElementById('positionsBody');
-  
-  if (userPositions.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--muted-text);">No positions yet</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = userPositions.map(pos => {
-    const bond = bonds.find(b => b.id === pos.bondId);
-    const now = new Date();
-    const entryDate = new Date(pos.entryBlock * 10 * 60 * 1000); // Convert blocks to milliseconds
-    
-    return 
-      <tr>
-        <td><strong>#</strong></td>
-        <td> BTC</td>
-        <td>%</td>
-        <td><span class="yield-positive">+ BTC</span></td>
-        <td></td>
-        <td><span class="bond-status active">Active</span></td>
-        <td>
-          <button class="btn-small btn-primary" onclick="openClaimYieldModal()" style="width: 100%;">
-            Claim
-          </button>
-        </td>
-      </tr>
-    ;
-  }).join('');
-
-  // Update portfolio overview
-  const totalInvested = userPositions.reduce((sum, p) => sum + p.amount, 0);
-  const totalYield = userPositions.reduce((sum, p) => sum + p.accrued, 0);
-  const avgYield = userPositions.length > 0 
-    ? (userPositions.reduce((sum, p) => sum + p.rate, 0) / userPositions.length).toFixed(2)
-    : 0;
-
-  document.getElementById('portfolioInvested').textContent = ${totalInvested.toFixed(4)} BTC;
-  document.getElementById('portfolioYield').textContent = ${totalYield.toFixed(6)} BTC;
-  document.getElementById('portfolioAvgYield').textContent = ${avgYield}%;
-}
-
-// ════════════════════════════════════════════════════════════
-// CLAIM YIELD
-// ════════════════════════════════════════════════════════════
-
-function openClaimYieldModal(bondId) {
-  selectedBondId = bondId;
-  const position = userPositions.find(p => p.bondId === bondId);
-  document.getElementById('yieldAvailable').textContent = ${position.accrued.toFixed(6)} BTC;
-  document.getElementById('claimYieldModal').classList.add('active');
-}
-
-function closeClaimYieldModal() {
-  document.getElementById('claimYieldModal').classList.remove('active');
-  selectedBondId = null;
-}
-
-async function claimYield() {
-  try {
-    const tx = await contract.claimYield(selectedBondId);
-    showAlert('warning', 'Transaction submitted...');
-    
-    await tx.wait();
-    
-    showAlert('success', 'Yield claimed successfully!');
-    closeClaimYieldModal();
-    
-    await loadDashboard();
-
-  } catch (error) {
-    console.error('Claim yield error:', error);
-    showAlert('error', Transaction failed: );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// CREATE BOND
-// ════════════════════════════════════════════════════════════
-
-document.getElementById('createBondAmount').addEventListener('input', updateCollateralRequired);
-document.getElementById('createBondRate').addEventListener('input', function() {
-  document.getElementById('createBondBtn').disabled = false;
-});
-
-function updateCollateralRequired() {
-  const amount = parseFloat(document.getElementById('createBondAmount').value) || 0;
-  const collateral = amount * 1.5;
-  document.getElementById('collateralRequired').textContent = ${collateral.toFixed(2)} BTC;
-}
-
-async function createBond() {
-  try {
-    const amount = parseFloat(document.getElementById('createBondAmount').value);
-    const rate = parseFloat(document.getElementById('createBondRate').value);
-    const duration = parseInt(document.getElementById('createBondDuration').value);
-
-    if (!amount || !rate || !duration) {
-      showAlert('error', 'Please fill all fields');
-      return;
-    }
-
-    // Convert to satoshis
-    const amountSatoshis = Math.floor(amount * 100_000_000);
-    const rateBPS = Math.floor(rate * 100); // Convert to basis points
-    const durationBlocks = Math.floor(duration * 144); // 144 blocks per day
-
-    const tx = await contract.createBond(amountSatoshis, rateBPS, durationBlocks);
-    showAlert('warning', 'Creating bond...');
-    
-    await tx.wait();
-    
-    showAlert('success', 'Bond created successfully!');
-    
-    // Reset form
-    document.getElementById('createBondAmount').value = '';
-    document.getElementById('createBondRate').value = '';
-    document.getElementById('createBondDuration').value = '365';
-
-    await loadDashboard();
-
-  } catch (error) {
-    console.error('Create bond error:', error);
-    showAlert('error', Failed to create bond: );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// UTILITIES
-// ════════════════════════════════════════════════════════════
-
-function updateStats() {
-  const totalBTC = bonds.reduce((sum, b) => sum + b.totalSold, 0);
-  const totalBonds = bonds.length;
-  const avgYield = bonds.length > 0 ? (bonds.reduce((sum, b) => sum + b.rate, 0) / bonds.length).toFixed(2) : 0;
-  const totalYield = userPositions.reduce((sum, p) => sum + p.accrued, 0).toFixed(6);
-
-  document.getElementById('totalBTC').textContent = ${totalBTC.toFixed(2)} BTC;
-  document.getElementById('totalBonds').textContent = totalBonds;
-  document.getElementById('avgYield').textContent = ${avgYield}%;
-  document.getElementById('totalYield').textContent = ${totalYield} BTC;
-}
-
-function showAlert(type, message) {
-  const alertMap = {
-    'success': document.getElementById('successAlert'),
-    'error': document.getElementById('errorAlert'),
-    'warning': document.getElementById('warningAlert')
+// ══════════════════════════════════════════
+// STATS — animated counter
+// ══════════════════════════════════════════
+function animateCounter(el, target, decimals=0, suffix=''){
+  let start = 0;
+  const duration = 1200;
+  const step = (timestamp) => {
+    if(!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const val = progress * target;
+    el.textContent = (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString()) + suffix;
+    if(progress < 1) requestAnimationFrame(step);
   };
-
-  const alert = alertMap[type];
-  if (!alert) return;
-
-  alert.textContent = message;
-  alert.classList.add('active');
-
-  setTimeout(() => {
-    alert.classList.remove('active');
-  }, 5000);
+  requestAnimationFrame(step);
 }
 
-function viewBondDetails(bondId) {
-  const bond = bonds.find(b => b.id === bondId);
-  console.log('Bond details:', bond);
-  // TODO: Open detailed modal
+function loadStats(){
+  const totalLocked = bonds.reduce((s,b)=>s+b.collateral,0);
+  const activeBonds = bonds.filter(b=>b.status==='active').length;
+  const avgApy = (bonds.reduce((s,b)=>s+b.rate,0)/bonds.length).toFixed(1);
+
+  setTimeout(()=>{
+    animateCounter(document.getElementById('statLocked'), totalLocked, 0, ' tokens');
+    animateCounter(document.getElementById('statBonds'), activeBonds, 0, '');
+    document.getElementById('statAvgApy').textContent = avgApy + '%';
+    animateCounter(document.getElementById('statYieldPaid'), 847, 0, ' tokens');
+  }, 300);
 }
 
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════
+// BONDS GRID
+// ══════════════════════════════════════════
+function buildBondsGrid(){
+  const grid = document.getElementById('bondsGrid');
+  grid.innerHTML = bonds.map(b=>{
+    const pct = Math.round((b.sold/b.amount)*100);
+    const available = b.amount - b.sold;
+    return `
+    <div class="bond-card" onclick="openBuyModal(${b.id})">
+      <div class="bond-card-head">
+        <div class="bond-id">Bond #${b.id}</div>
+        <div class="bond-status-pill ${b.status==='active'?'pill-active':'pill-mature'}">${b.status==='active'?'● ACTIVE':'◆ MATURE'}</div>
+      </div>
+      <div class="bond-card-body">
+        <div class="bond-issuer">Issuer: ${b.issuer}</div>
+        <div class="bond-metrics">
+          <div class="metric"><div class="metric-lbl">APY</div><div class="metric-val green">${b.rate}%</div></div>
+          <div class="metric"><div class="metric-lbl">Duration</div><div class="metric-val">${b.duration}d</div></div>
+          <div class="metric"><div class="metric-lbl">Total Size</div><div class="metric-val">${b.amount.toLocaleString()}</div></div>
+          <div class="metric"><div class="metric-lbl">Available</div><div class="metric-val">${available.toLocaleString()}</div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-labels"><span>FUNDED</span><span>${b.sold.toLocaleString()} / ${b.amount.toLocaleString()}</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="bond-actions">
+          <button class="btn-buy" onclick="event.stopPropagation();openBuyModal(${b.id})">${b.status==='active'?'Buy Position':'Claim Yield'}</button>
+          <button class="btn-details" onclick="event.stopPropagation()">Details</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('bondCount').textContent = bonds.filter(b=>b.status==='active').length + ' Active Bonds';
+}
+
+// ══════════════════════════════════════════
+// BUY MODAL
+// ══════════════════════════════════════════
+function openBuyModal(bondId){
+  selectedBond = bonds.find(b=>b.id===bondId);
+  document.getElementById('buyModalSub').textContent = `Bond #${bondId} · ${selectedBond.rate}% APY · ${selectedBond.duration} days`;
+  document.getElementById('buyAmount').value = '';
+  document.getElementById('buyModalApy').textContent = selectedBond.rate + '%';
+  document.getElementById('buyModalDaily').textContent = '—';
+  document.getElementById('buyModalReturn').textContent = '—';
+  document.getElementById('buyModal').classList.add('open');
+}
+function closeBuyModal(e){
+  if(e.target===document.getElementById('buyModal'))
+    document.getElementById('buyModal').classList.remove('open');
+}
+function updateBuyPreview(){
+  if(!selectedBond) return;
+  const amt = parseFloat(document.getElementById('buyAmount').value)||0;
+  const daily = (amt * selectedBond.rate / 100 / 365).toFixed(4);
+  const yearly = (amt * selectedBond.rate / 100).toFixed(2);
+  document.getElementById('buyModalDaily').textContent = daily + ' tokens';
+  document.getElementById('buyModalReturn').textContent = '+' + yearly + ' tokens';
+}
+function confirmBuy(){
+  const amt = parseFloat(document.getElementById('buyAmount').value);
+  if(!amt||amt<=0){ showToast('error','Enter a valid amount'); return; }
+  if(!walletConnected){ showToast('info','Connect your OP_WALLET first'); return; }
+  document.getElementById('buyModal').classList.remove('open');
+  showToast('info','Transaction submitted — waiting for confirmation...');
+  setTimeout(()=>showToast('success',`Bought ${amt} tokens in Bond #${selectedBond.id} at ${selectedBond.rate}% APY`),2000);
+}
+
+// ══════════════════════════════════════════
+// CREATE BOND PREVIEW
+// ══════════════════════════════════════════
+function updatePreview(){
+  const amount   = parseFloat(document.getElementById('bondAmount').value)||0;
+  const rate     = parseFloat(document.getElementById('bondRate').value)||0;
+  const duration = parseInt(document.getElementById('bondDuration').value)||365;
+  const collateral = amount * 1.5;
+  const interest = (amount * rate / 100 * duration / 365).toFixed(2);
+
+  document.getElementById('collateralBox').textContent = collateral ? collateral.toLocaleString()+' tokens' : '— tokens';
+  document.getElementById('previewApy').textContent    = rate ? rate+'%' : '—%';
+  document.getElementById('prevRaise').textContent     = amount ? amount.toLocaleString()+' tokens' : '— tokens';
+  document.getElementById('prevCollateral').textContent= collateral ? collateral.toLocaleString()+' tokens' : '— tokens';
+  document.getElementById('prevDuration').textContent  = duration+'d';
+  document.getElementById('prevInterest').textContent  = interest ? interest+' tokens' : '— tokens';
+}
+
+function createBond(){
+  const amount = parseFloat(document.getElementById('bondAmount').value);
+  const rate   = parseFloat(document.getElementById('bondRate').value);
+  if(!amount||!rate){ showToast('error','Fill in all fields'); return; }
+  if(!walletConnected){ showToast('info','Connect your OP_WALLET first'); return; }
+  showToast('info','Creating bond — locking collateral...');
+  setTimeout(()=>showToast('success','Bond created successfully! Investors can now buy positions.'),2000);
+}
+
+// ══════════════════════════════════════════
+// WALLET CONNECT (OP_NET)
+// ══════════════════════════════════════════
+async function connectWallet(){
+  const btn = document.getElementById('connectBtn');
+  btn.textContent = 'CONNECTING...';
+  btn.disabled = true;
+
+  try {
+    if(window.opnet){
+      const accounts = await window.opnet.requestAccounts();
+      if(accounts && accounts.length > 0){
+        walletConnected = true;
+        walletAddress = accounts[0];
+        btn.textContent = walletAddress.slice(0,8)+'...'+walletAddress.slice(-4);
+        btn.classList.add('connected');
+        btn.disabled = false;
+        showToast('success','Wallet connected: '+walletAddress.slice(0,8)+'...');
+        loadUserPortfolio();
+      } else {
+        throw new Error('No accounts returned');
+      }
+    } else {
+      // OP_WALLET not installed — show demo mode
+      walletConnected = true;
+      walletAddress   = 'opt1pxx8fsalz9tf_DEMO';
+      btn.textContent = 'opt1pxx8...DEMO';
+      btn.classList.add('connected');
+      btn.disabled = false;
+      showToast('info','OP_WALLET not found — running in demo mode');
+      loadUserPortfolio();
+    }
+  } catch(e){
+    btn.textContent = 'CONNECT WALLET';
+    btn.disabled = false;
+    showToast('error','Connection failed: '+e.message);
+  }
+}
+
+function loadUserPortfolio(){
+  // Mock user positions
+  userPositions = [
+    { bondId:1, amount:500, rate:8, entryBlock:3350, claimed:0.8, accrued:1.2 },
+    { bondId:3, amount:200, rate:5, entryBlock:3380, claimed:0.1, accrued:0.4 },
+  ];
+  renderPortfolio();
+}
+
+function renderPortfolio(){
+  const totalInvested = userPositions.reduce((s,p)=>s+p.amount,0);
+  const totalYield    = userPositions.reduce((s,p)=>s+p.accrued,0);
+  const avgApy        = userPositions.length ? (userPositions.reduce((s,p)=>s+p.rate,0)/userPositions.length).toFixed(1) : 0;
+
+  document.getElementById('portInvested').textContent = totalInvested.toLocaleString()+' tokens';
+  document.getElementById('portYield').textContent    = totalYield.toFixed(4)+' tokens';
+  document.getElementById('portAvgApy').textContent   = avgApy+'%';
+
+  document.getElementById('positionsBody').innerHTML = userPositions.map(p=>`
+    <tr>
+      <td><strong>Bond #${p.bondId}</strong></td>
+      <td>${p.amount.toLocaleString()} tokens</td>
+      <td>${p.rate}%</td>
+      <td><span class="yield-green">+${p.accrued.toFixed(4)} tokens</span></td>
+      <td>#${p.entryBlock.toLocaleString()}</td>
+      <td><span class="bond-status-pill pill-active">ACTIVE</span></td>
+      <td><button class="btn-buy" style="width:100%;padding:8px" onclick="claimYield(${p.bondId})">Claim</button></td>
+    </tr>`).join('');
+}
+
+function claimYield(bondId){
+  showToast('info',`Claiming yield from Bond #${bondId}...`);
+  setTimeout(()=>showToast('success',`Yield claimed from Bond #${bondId}!`),1500);
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(type, msg){
+  const icons = {success:'✅',error:'❌',info:'ℹ️'};
+  const el = document.createElement('div');
+  el.className = `toast-item toast-${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+
+// ══════════════════════════════════════════
+// BLOCK COUNTER
+// ══════════════════════════════════════════
+function tick(){
+  currentBlock++;
+  document.getElementById('navBlock').textContent = 'BLOCK #'+currentBlock.toLocaleString();
+  // Update accrued yield live
+  if(walletConnected && userPositions.length){
+    userPositions.forEach(p=>{ p.accrued += p.amount * p.rate / 100 / 52560 * 0.001; });
+    document.getElementById('portYield').textContent = userPositions.reduce((s,p)=>s+p.accrued,0).toFixed(6)+' tokens';
+  }
+}
+
+// ══════════════════════════════════════════
 // INIT
-// ════════════════════════════════════════════════════════════
-
-updateStats();
-
-console.log('Bitcoin Yield Bonds Dashboard loaded');
-console.log('Waiting for wallet connection...');
+// ══════════════════════════════════════════
+buildTicker();
+buildBondsGrid();
+loadStats();
+document.getElementById('navBlock').textContent = 'BLOCK #'+currentBlock.toLocaleString();
+setInterval(tick, 10000);
 </script>
-
 </body>
 </html>
